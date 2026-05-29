@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { type Product } from "@/lib/products";
 import { useCart } from "@/components/CartProvider";
@@ -13,6 +13,7 @@ export default function ProductView({ product }: { product: Product }) {
   const [sizeOpen, setSizeOpen] = useState(false);
   const [sizeError, setSizeError] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [galleryIdx, setGalleryIdx] = useState(0);
 
   const details = product.details ?? [product.desc];
 
@@ -20,6 +21,33 @@ export default function ProductView({ product }: { product: Product }) {
     () => product.variants.find((v) => v.id === variantId) ?? product.variants[0],
     [product, variantId],
   );
+
+  // Build the carousel — use variant.gallery when present, otherwise loop the
+  // mainImage/image so the carousel UI still works with one source asset.
+  const gallery = useMemo(() => {
+    const main = variant.mainImage ?? variant.image;
+    if (variant.gallery && variant.gallery.length > 0) return variant.gallery;
+    return [main, main, main];
+  }, [variant]);
+
+  // Reset to the first slide whenever the colour swatch changes.
+  useEffect(() => {
+    setGalleryIdx(0);
+  }, [variantId]);
+
+  // Keyboard navigation: ← / →
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") setGalleryIdx((i) => (i - 1 + gallery.length) % gallery.length);
+      else if (e.key === "ArrowRight") setGalleryIdx((i) => (i + 1) % gallery.length);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gallery.length]);
+
+  const goPrev = () => setGalleryIdx((i) => (i - 1 + gallery.length) % gallery.length);
+  const goNext = () => setGalleryIdx((i) => (i + 1) % gallery.length);
+  const currentImage = gallery[galleryIdx];
 
   function pickSize(s: string) {
     setSize(s);
@@ -51,19 +79,44 @@ export default function ProductView({ product }: { product: Product }) {
 
   return (
     <main data-bg="light" className="relative h-screen overflow-hidden bg-[#B5B7B9]">
-      {/* Full-bleed hero image */}
+      {/* Full-bleed carousel */}
       <div className="absolute inset-0 z-0">
         <Image
-          src={variant.mainImage ?? variant.image}
-          alt={`${product.name} — ${variant.name}`}
+          src={currentImage}
+          alt={`${product.name} — ${variant.name} (image ${galleryIdx + 1} of ${gallery.length})`}
           fill
           priority
           sizes="100vw"
           className="object-cover scale-[1.15]"
           style={{ objectPosition: "center 65%" }}
-          key={variant.id}
+          key={`${variant.id}-${galleryIdx}`}
         />
       </div>
+
+      {/* Carousel arrows + dots */}
+      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-between px-4 md:px-8">
+        <button
+          type="button"
+          onClick={goPrev}
+          aria-label="Previous image"
+          className="pointer-events-auto grid h-12 w-12 md:h-14 md:w-14 place-items-center rounded-full bg-white/69 backdrop-blur-md text-[#191E29] hover:bg-white transition-colors"
+        >
+          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
+            <path d="M10 3 L5 8 L10 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          aria-label="Next image"
+          className="pointer-events-auto grid h-12 w-12 md:h-14 md:w-14 place-items-center rounded-full bg-white/69 backdrop-blur-md text-[#191E29] hover:bg-white transition-colors"
+        >
+          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
+            <path d="M6 3 L11 8 L6 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
 
 
       {/* Action bar — fixed, full-width with section dividers */}

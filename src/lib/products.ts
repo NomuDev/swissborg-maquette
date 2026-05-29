@@ -10,6 +10,8 @@ export type Variant = {
   image: string;
   /** Optional image used on the PDP main display. Falls back to `image` if absent. */
   mainImage?: string;
+  /** Optional ordered gallery of PDP images for the carousel. If absent or single, mainImage is used and looped. */
+  gallery?: string[];
 };
 
 export type Product = {
