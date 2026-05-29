@@ -27,7 +27,7 @@ export default function Home() {
       >
         {/* Clip wrapper — keeps the parallax-translated image bound to the hero, doesn't leak into next section */}
         <div className="absolute inset-0 overflow-hidden">
-          <HeroImage src="/hero%20cyrus.jpg" />
+          <HeroImage src="/hero%20cyrus.webp" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F5F2EC]/40" />
         </div>
 
