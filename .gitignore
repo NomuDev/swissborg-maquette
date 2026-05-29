@@ -42,3 +42,6 @@ next-env.d.ts
 
 # claude code local config
 .claude/
+# Oversized source PNGs — JPG-compressed versions are committed instead
+public/alex produt page.png
+public/prod 1 landing.png
